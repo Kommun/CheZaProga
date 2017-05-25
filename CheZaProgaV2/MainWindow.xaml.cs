@@ -13,9 +13,6 @@ using ClosedXML.Excel;
 
 namespace CheZaProgaV2
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         public MainWindow()
@@ -27,7 +24,7 @@ namespace CheZaProgaV2
         {
             var addresses = GetSourceAddresses();
             tbRecognizedAddressesInSource.Text = addresses.Count.ToString();
-            SetSummToResult(addresses);
+            FindMatches(addresses);
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
@@ -38,64 +35,6 @@ namespace CheZaProgaV2
         private List<SourceAddress> GetSourceAddresses()
         {
             var _addresses = new List<SourceAddress>();
-
-            //string connString = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=source.xls;Extended Properties=Excel 8.0";
-
-            //// Create the connection object 
-            //OleDbConnection oledbConn = new OleDbConnection(connString);
-            //try
-            //{
-            //    // Open connection
-            //    oledbConn.Open();
-
-            //    // Create OleDbCommand object and select data from worksheet Sheet1
-            //    OleDbCommand cmd = new OleDbCommand("SELECT * FROM [sheet$]", oledbConn);
-
-            //    // Create new OleDbDataAdapter 
-            //    OleDbDataAdapter oleda = new OleDbDataAdapter();
-
-            //    oleda.SelectCommand = cmd;
-
-            //    // Create a DataSet which will hold the data extracted from the worksheet.
-            //    DataSet ds = new DataSet();
-            //    oleda.Fill(ds);
-
-            //    var dt = ds.Tables[0];
-
-            //    int firstAddressIndex = 7;
-            //    // Парсим адреса из исходного файла
-            //    for (int i = firstAddressIndex; i < dt.Rows.Count; i++)
-            //    {
-            //        tbAddressesInSource.Text = (dt.Rows.Count - firstAddressIndex).ToString();
-
-            //        var address = dt.Rows[i][1].ToString();
-            //        var pattern = @"(р-н .+?,)|(рп .+?,)|(г (?<city>.+?),)|(ул (?<street>.+?),)|(с .+?,)|(проезд .+?,)|(пр-кт .+?,)|(?<house> \d+[\dа-яА-Я -]*)";
-
-            //        string street = "";
-            //        string house = "";
-            //        foreach (Match match in Regex.Matches(address, pattern))
-            //        {
-            //            if (!string.IsNullOrEmpty(match.Groups["street"].Value))
-            //                street = match.Groups["street"].Value;
-
-            //            if (!string.IsNullOrEmpty(match.Groups["house"].Value))
-            //                house = match.Groups["house"].Value;
-            //        }
-
-            //        if (!string.IsNullOrEmpty(street) && !string.IsNullOrEmpty(house))
-            //            _addresses.Add(new Address
-            //            {
-            //                FullAddress = address,
-            //                Street = street,
-            //                House = house,
-            //                Summ = dt.Rows[i][2].ToString()
-            //            });
-            //    }
-            //}
-            //catch { }
-
-            //// Close connection
-            //oledbConn.Close();
 
             var wb = new XLWorkbook("source.xlsx");
             var ws = wb.Worksheets.FirstOrDefault();
@@ -112,7 +51,7 @@ namespace CheZaProgaV2
                 }
 
                 var address = row.Cell(2).Value.ToString();
-                var pattern = @"(р-н .+?,)|(рп .+?,)|(г (?<city>.+?),)|(с .+?,)|((ул|ул|проезд|пр-кт|б-р|пл|пер|ш)( им)? (?<street>.+?),)|(?<house> \d+[\dа-яА-Я -]*)";
+                var pattern = @"(р-н .+?,)|(рп .+?,)|(г (?<city>.+?),)|(с .+?,)|((ул|ул|проезд|пр-кт|б-р|пл|пер|ш|наб|снт)( им)? (?<street>.+?),)|(?<house>\d+[\dа-яА-Я -\/]*)";
 
                 string street = "";
                 string house = "";
@@ -140,7 +79,12 @@ namespace CheZaProgaV2
             return _addresses;
         }
 
-        private void SetSummToResult(List<SourceAddress> addresses)
+        private bool ContainsInAddress(string address, string stringToFind)
+        {
+            return address.Replace(" ", "").Replace("-", "").ToLower().Contains(stringToFind.Replace(" ", "").Replace("-", "").ToLower());
+        }
+
+        private void FindMatches(List<SourceAddress> addresses)
         {
             var matches = addresses
                 .Select(a => new SearchMatch
@@ -150,95 +94,28 @@ namespace CheZaProgaV2
                 })
                 .ToList();
 
-            //string connString = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=result.xls;Extended Properties=Excel 8.0";
-
-            //// Create the connection object 
-            //OleDbConnection oledbConn = new OleDbConnection(connString);
-            //try
-            //{
-            //    // Open connection
-            //    oledbConn.Open();
-
-            //    // Create OleDbCommand object and select data from worksheet Sheet1
-            //    OleDbCommand cmd = new OleDbCommand("SELECT * FROM [Лист1$]", oledbConn);
-
-            //    // Create new OleDbDataAdapter 
-            //    OleDbDataAdapter oleda = new OleDbDataAdapter();
-
-            //    oleda.SelectCommand = cmd;
-
-            //    // Create a DataSet which will hold the data extracted from the worksheet.
-            //    DataSet ds = new DataSet();
-            //    oleda.Fill(ds);
-
-            //    var dt = ds.Tables[0];
-
-            //    for (int i = 0; i < dt.Rows.Count; i++)
-            //    {
-            //        var address = dt.Rows[i][3].ToString();
-
-            //        if (dt.Rows[i][0].ToString() != filial)
-            //            continue;
-
-            //        bool isMatched = false;
-            //        // Ищем соотвествие адресов
-            //        foreach (var a in addresses)
-            //        {
-            //            if (!address.Contains(a.Street) || !address.Contains(a.House))
-            //                continue;
-
-            //            isMatched = true;
-            //            matches.First(m => m.SourceAdress == a).ResultAddresses.Add(address);
-            //        }
-            //    }
-            //    matches = matches.OrderByDescending(m => m.ResultAddresses.Count).ToList();
-
-            //    foreach (var m in matches.Where(m => m.ResultAddresses.Count > 1))
-            //    {
-            //        spMain.Children.Add(new MultiMatch
-            //        {
-            //            SourceAddress = m.SourceAdress.FullAddress,
-            //            ResultAddresses = m.ResultAddresses
-            //        });
-            //    }
-
-            //    foreach (var m in matches.Where(m => m.ResultAddresses.Count == 1))
-            //    {
-            //        spMain.Children.Add(new SingleMatch
-            //        {
-            //            SourceAddress = m.SourceAdress.FullAddress,
-            //            ResultAddress = m.ResultAddresses.FirstOrDefault()
-            //        });
-            //    }
-
-            //    foreach (var m in matches.Where(m => m.ResultAddresses.Count == 0))
-            //    {
-            //        spMain.Children.Add(new WithoutMatch
-            //        {
-            //            SourceAddress = m.SourceAdress.FullAddress
-            //        });
-            //    }
-            //}
-            //catch { }
-            //oledbConn.Close();
-
             spMain.Children.Clear();
             var wb = new XLWorkbook("result.xlsx");
             var ws = wb.Worksheets.FirstOrDefault();
 
+            // Узнаем номера нужных столбцов 
+            var colNumberFilial = ws.Row(1).CellsUsed(c => c.GetString() == "Филиал").FirstOrDefault().WorksheetColumn().ColumnNumber();
+            var colNumberAddress = ws.Row(1).CellsUsed(c => c.GetString() == "Адрес").FirstOrDefault().WorksheetColumn().ColumnNumber();
+            var colNumberComment = ws.Row(1).CellsUsed(c => c.GetString() == "Адрес в системе").FirstOrDefault().WorksheetColumn().ColumnNumber();
+
             foreach (var row in ws.Rows())
             {
-                var address = row.Cell(4).Value.ToString();
+                var address = row.Cell(colNumberAddress).GetString();
+                var comment = row.Cell(colNumberComment).GetString();
 
-                if (row.Cell(1).Value.ToString().ToLower() != tbFilial.Text.ToLower())
+                if (row.Cell(colNumberFilial).Value.ToString().ToLower() != tbFilial.Text.ToLower())
                     continue;
 
                 // Ищем соотвествие адресов
-
                 foreach (var a in addresses)
                 {
-                    if (!address.Replace(" ", "").ToLower().Contains(a.Street.Replace(" ", "").ToLower())
-                        || !address.Replace(" ", "").ToLower().Contains(a.House.Replace(" ", "").ToLower()))
+                    if ((!ContainsInAddress(address, a.Street) || !ContainsInAddress(address, a.House))
+                        && (!ContainsInAddress(comment, a.Street) || !ContainsInAddress(comment, a.House)))
                         continue;
 
                     matches.First(m => m.SourceAdress == a)
@@ -246,6 +123,7 @@ namespace CheZaProgaV2
                         .Add(new ResultAddress
                         {
                             Address = address,
+                            Comment = comment,
                             RowNumber = row.RowNumber()
                         });
                 }
@@ -282,29 +160,6 @@ namespace CheZaProgaV2
 
         private void UpdateFile()
         {
-            //string connString = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=result.xls;Extended Properties=Excel 8.0";
-
-            //// Create the connection object 
-            //OleDbConnection oledbConn = new OleDbConnection(connString);
-            //try
-            //{
-            //    // Open connection
-            //    oledbConn.Open();
-
-
-            //    foreach (var control in spMain.Children)
-            //    {
-            //        if (control is SingleMatch)
-            //        {
-            //            OleDbCommand cmd = new OleDbCommand($"UPDATE [Лист1$] SET (апрель = '123') WHERE Филиал = '{tbFilial.Text}' and Адрес = '{(control as SingleMatch).ResultAddress}';", oledbConn);
-            //            //cmd.Parameters.Add("@var1", OleDbType.Double).Value = 123;
-            //            var f = cmd.ExecuteNonQuery();
-            //        }
-            //    }
-            //}
-            //catch { }
-            //oledbConn.Close();
-
             if (string.IsNullOrEmpty(tbMonth.Text))
             {
                 MessageBox.Show("Введите месяц");
@@ -371,6 +226,7 @@ namespace CheZaProgaV2
     public class ResultAddress
     {
         public string Address { get; set; }
+        public string Comment { get; set; }
         public int RowNumber { get; set; }
         public bool IsChecked { get; set; }
     }
