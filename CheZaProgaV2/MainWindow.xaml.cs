@@ -51,7 +51,7 @@ namespace CheZaProgaV2
                 }
 
                 var address = row.Cell(2).Value.ToString();
-                var pattern = @"(р-н .+?,)|(рп .+?,)|(г (?<city>.+?),)|(с .+?,)|((ул|ул|проезд|пр-кт|б-р|пл|пер|ш|наб|снт)( им)? (?<street>.+?),)|(?<house>\d+[\dа-яА-Я -\/]*)";
+                var pattern = @"(р-н .+?,)|(рп .+?,)|(г (?<city>.+?),)|(с .+?,)|((ул|ул|проезд|пр-кт|б-р|пл|пер|ш|наб|снт|мкр|тер|тракт)( им)? (?<street>.+?),)|(?<house>\d+[\dа-яА-Я -\/]*)";
 
                 string street = "";
                 string house = "";
@@ -81,7 +81,17 @@ namespace CheZaProgaV2
 
         private bool ContainsInAddress(string address, string stringToFind)
         {
-            return address.Replace(" ", "").Replace("-", "").ToLower().Contains(stringToFind.Replace(" ", "").Replace("-", "").ToLower());
+            return GetClearString(address).Contains(GetClearString(stringToFind));
+        }
+
+        private string GetClearString(string stringToClear)
+        {
+            const string charsToDelete = " -\"";
+
+            foreach (var c in charsToDelete)
+                stringToClear = stringToClear.Replace(c.ToString(), "");
+
+            return stringToClear.ToLower();
         }
 
         private void FindMatches(List<SourceAddress> addresses)
